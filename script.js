@@ -2,14 +2,15 @@ const imageInput = document.getElementById("imageInput");
 const piecesContainer = document.getElementById("piecesContainer");
 const puzzleContainer = document.getElementById("puzzleContainer");
 const shuffleBtn = document.getElementById("shuffleBtn");
-const gridSizeY = 3; // Высота поля
-const gridSizeX = 3; // Длина поля
+const gridSizeY = 6; // Высота поля
+const gridSizeX = 9; // Длина поля
 const pieceSize = 100; // Размер клетки пазла
 let pieces = [];
 
 puzzleContainer.style.gridTemplateColumns = `repeat(${gridSizeX}, 1fr)`;
 puzzleContainer.style.gridTemplateRows = `repeat(${gridSizeY}, 1fr);`;
 
+let image_src = null;
 
 // Создание сетки на поле
 function createGrid() {
@@ -31,13 +32,7 @@ function createGrid() {
 imageInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-        img.onload = () => {
-            resizeImage(img, gridSizeX * pieceSize, gridSizeY * pieceSize, () => {
-                preparePuzzle(img);
-            });
-        };
+        image_src = URL.createObjectURL(file);
     }
 });
 
@@ -79,7 +74,7 @@ function preparePuzzle(img) {
 
             // Случайное начальное расположение
             piece.style.position = "absolute";
-            piece.style.left = `${Math.random() * 200}px`;
+            piece.style.left = `${Math.random() * 500}px`;
             piece.style.top = `${Math.random() * 500}px`;
 
             // Добавляем события для перетаскивания
@@ -105,6 +100,7 @@ function dragEnd(e) {
         return;
     }
     const rect = puzzleContainer.getBoundingClientRect();
+    const piecesRect = piecesContainer.getBoundingClientRect();
     const x = e.clientX - rect.left; // Координаты мыши относительно поля
     const y = e.clientY - rect.top;
 
@@ -157,12 +153,11 @@ function dragEnd(e) {
             }
         }
         else {
-            draggedPiece.style.left = `${col * pieceSize + rect.left + cell_border_Y*(col+1)}px`;
-            draggedPiece.style.top = `${row * pieceSize + rect.top + cell_border_X * (row + 1)}px`;
+            draggedPiece.style.left = `${col * pieceSize + rect.left - piecesRect.left + cell_border_Y * (col+1)}px`;
+            draggedPiece.style.top = `${row * pieceSize + rect.top - piecesRect.top + cell_border_X * (row + 1)}px`;
             
             draggedPiece.dataset.col = col;
             draggedPiece.dataset.row = row;
-    
         }
         
         // Проверка правильности позиции
@@ -196,10 +191,20 @@ function checkVictory() {
     }
 }
 
+createGrid();
 // Кнопка "Начать игру"
 shuffleBtn.addEventListener("click", () => {
     piecesContainer.innerHTML = "";
     puzzleContainer.innerHTML = "";
     createGrid();
+    if (image_src !== null) {
+        let image = new Image();
+        image.src = image_src;
+        image.onload = () => {
+            resizeImage(image, gridSizeX * pieceSize, gridSizeY * pieceSize, () => {
+                preparePuzzle(image);
+            });
+        };
+    }
     pieces = [];
 });

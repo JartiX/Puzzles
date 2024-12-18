@@ -18,7 +18,8 @@ h1 {
 }
 
 #piecesContainer {
-    width: 300px;
+    position: relative;
+    width: 600px;
     height: 600px;
     display: flex;
     flex-wrap: wrap;
@@ -26,6 +27,7 @@ h1 {
     background-color: #e0e0e0;
     border: 2px solid #ccc;
     padding: 5px;
+    box-sizing: border-box;
 }
 
 #puzzleContainer {
