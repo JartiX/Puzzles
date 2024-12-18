@@ -1,18 +1,21 @@
-const imageInput = document.getElementById("imageInput");
-const piecesContainer = document.getElementById("piecesContainer");
-const puzzleContainer = document.getElementById("puzzleContainer");
-const shuffleBtn = document.getElementById("shuffleBtn");
-const gridSizeY = 6; // Высота поля
-const gridSizeX = 9; // Длина поля
-const pieceSize = 100; // Размер клетки пазла
+const imageInput = document.querySelector(".imageInput");
+const piecesContainer = document.querySelector(".piecesContainer");
+const puzzleContainer = document.querySelector(".puzzleContainer");
+const shuffleBtn = document.querySelector(".shuffleBtn");
+const resizeBtn = document.querySelector(".resizeBtn");
+const resetBtn = document.querySelector(".resetBtn");
+
+let gridSizeY = 6; // Высота поля
+let gridSizeX = 9; // Длина поля
+const pieceSize = 70; // Размер клетки пазла
 let pieces = [];
 
 puzzleContainer.style.gridTemplateColumns = `repeat(${gridSizeX}, 1fr)`;
 puzzleContainer.style.gridTemplateRows = `repeat(${gridSizeY}, 1fr);`;
 
 let image_src = null;
-
-// Создание сетки на поле
+const default_src = '/images/mountains.jpg'
+    
 function createGrid() {
     puzzleContainer.innerHTML = "";
     for (let row = 0; row < gridSizeY; row++) {
@@ -28,7 +31,6 @@ function createGrid() {
     }
 }
 
-// Загрузка изображения и создание пазлов
 imageInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -40,16 +42,14 @@ function resizeImage(img, targetWidth, targetHeight, callback) {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
-    // Устанавливаем новые размеры на основе требуемых
     canvas.width = targetWidth;
     canvas.height = targetHeight;
 
     // Сжимаем изображение, сохраняя пропорции
     ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-    // После сжатия вызываем коллбек, передав сжатое изображение
     img.src = canvas.toDataURL("image/jpeg");
-    img.onload = callback;  // Продолжаем с подготовкой пазла после загрузки нового изображения
+    img.onload = callback;
 }
 
 function preparePuzzle(img) {
@@ -57,6 +57,15 @@ function preparePuzzle(img) {
     pieces = [];
     const pieceWidth = img.width / gridSizeX;
     const pieceHeight = img.height / gridSizeY;
+
+    
+    puzzleContainer.style.gridTemplateColumns = `repeat(${gridSizeX}, 1fr)`;
+    puzzleContainer.style.gridTemplateRows = `repeat(${gridSizeY}, 1fr);`;
+
+    pzRect = puzzleContainer.getBoundingClientRect();
+
+    piecesContainer.style.width = `${pzRect.width-pieceSize}px`;
+    piecesContainer.style.height = `${pzRect.height}px`;
 
     for (let row = 0; row < gridSizeY; row++) {
         for (let col = 0; col < gridSizeX; col++) {
@@ -74,8 +83,8 @@ function preparePuzzle(img) {
 
             // Случайное начальное расположение
             piece.style.position = "absolute";
-            piece.style.left = `${Math.random() * 500}px`;
-            piece.style.top = `${Math.random() * 500}px`;
+            piece.style.left = `${Math.random() * pieceSize*(gridSizeX-2)}px`;
+            piece.style.top = `${Math.random() * pieceSize*(gridSizeY-1)}px`;
 
             // Добавляем события для перетаскивания
             piece.draggable = true;
@@ -88,7 +97,6 @@ function preparePuzzle(img) {
     }
 }
 
-// Drag-and-Drop
 let draggedPiece = null;
 
 function dragStart(e) {
@@ -101,19 +109,19 @@ function dragEnd(e) {
     }
     const rect = puzzleContainer.getBoundingClientRect();
     const piecesRect = piecesContainer.getBoundingClientRect();
-    const x = e.clientX - rect.left; // Координаты мыши относительно поля
+    const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     // Расчёт ближайшей клетки
     const col = Math.floor(x / pieceSize);
     const row = Math.floor(y / pieceSize);
 
-    cell = puzzleContainer.firstChild;
-    cellRect = cell.getBoundingClientRect();
-    cell_border_Y = cellRect.width-pieceSize;
-    cell_border_X = cellRect.height-pieceSize;
+    var cell = puzzleContainer.firstChild;
+    var cellRect = cell.getBoundingClientRect();
+    var cell_border_Y = cellRect.width-pieceSize;
+    var cell_border_X = cellRect.height-pieceSize;
 
-    // Проверка попадания внутрь сетки
+    // Проверка попадания внутрь сетки пазла
     if (row >= 0 && row < gridSizeY && col >= 0 && col < gridSizeX) {
         const targetCell = puzzleContainer.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
         const targetPiece = Array.from(piecesContainer.children).find(piece => {
@@ -134,7 +142,7 @@ function dragEnd(e) {
             draggedPiece.style.left = targetPiecePos.left;
             draggedPiece.style.top = targetPiecePos.top;
 
-            // Меняем данные о правильных позициях
+            // Меняем данные о позициях
             const tempRow = draggedPiece.dataset.row;
             const tempCol = draggedPiece.dataset.col;
 
@@ -148,6 +156,10 @@ function dragEnd(e) {
                 targetPiece.dataset.correctRow === tempRow &&
                 targetPiece.dataset.correctCol === tempCol
             ) {
+                draggedPiece.classList.add('rightPlace');
+                    setTimeout(() => {
+                        draggedPiece.classList.remove('rightPlace');
+                }, 1000);
                 targetPiece.draggable = false;
                 targetPiece.style.cursor = 'not-allowed';
             }
@@ -160,51 +172,87 @@ function dragEnd(e) {
             draggedPiece.dataset.row = row;
         }
         
-        // Проверка правильности позиции
         if (
             parseInt(draggedPiece.dataset.correctRow) === row &&
             parseInt(draggedPiece.dataset.correctCol) === col
         ) {
+            draggedPiece.classList.add('rightPlace');
+            setTimeout(() => {
+                draggedPiece.classList.remove('rightPlace');
+            }, 1000);
             draggedPiece.draggable = false;
             draggedPiece.style.cursor = 'not-allowed';
         }
         
         checkVictory();
+    } else if (
+        e.clientX >= piecesRect.left &&
+        e.clientX <= piecesRect.right &&
+        e.clientY >= piecesRect.top &&
+        e.clientY <= piecesRect.bottom
+    ) {
+        // Если кусок внутри контейнера piecesContainer, устанавливаем позицию куска в месте, где его отпустили
+        const offsetX = e.clientX - piecesRect.left;
+        const offsetY = e.clientY - piecesRect.top;
+        draggedPiece.style.left = `${offsetX - pieceSize / 2}px`;
+        draggedPiece.style.top = `${offsetY - pieceSize / 2}px`;
     } else {
-        // Возвращаем кусок на место, если он вне поля
-        draggedPiece.style.left = `${Math.random() * 200}px`;
-        draggedPiece.style.top = `${Math.random() * 500}px`;
+        // Если кусок за пределами контейнеров, ставим его случайно
+        draggedPiece.style.left = `${Math.random() * (gridSizeX - 2) * pieceSize}px`;
+        draggedPiece.style.top = `${Math.random() * (gridSizeY - 1) * pieceSize}px`;
     }
 }
 
 // Проверка на победу
 function checkVictory() {
-    console.log(pieces);
     const allPiecesCorrect = pieces.every(piece => {
-        // Проверяем, находятся ли все кусочки в правильных позициях, используя данные о правильных строках и столбцах
+        // Проверяем, находятся ли все кусочки в правильных позициях
         return parseInt(piece.dataset.correctRow) === parseInt(piece.dataset.row) &&
                parseInt(piece.dataset.correctCol) === parseInt(piece.dataset.col);
     });
 
     if (allPiecesCorrect) {
-        alert("Поздравляем, вы выиграли!");
+        setTimeout(() => {
+            alert("Поздравляем, вы выиграли!");
+        }, 500);
     }
 }
 
 createGrid();
+
+let pzRect = puzzleContainer.getBoundingClientRect();
+piecesContainer.style.width = `${pzRect.width-pieceSize}px`;
+piecesContainer.style.height = `${pzRect.height}px`;
+
+resetBtn.addEventListener("click", () => {
+    image_src = default_src;
+    imageInput.value = "";
+});
+
 // Кнопка "Начать игру"
 shuffleBtn.addEventListener("click", () => {
     piecesContainer.innerHTML = "";
     puzzleContainer.innerHTML = "";
     createGrid();
-    if (image_src !== null) {
-        let image = new Image();
-        image.src = image_src;
-        image.onload = () => {
-            resizeImage(image, gridSizeX * pieceSize, gridSizeY * pieceSize, () => {
-                preparePuzzle(image);
-            });
-        };
-    }
+    image_src = image_src === null ? default_src : image_src; 
+    let image = new Image();
+    image.src = image_src;
+    image.onload = () => {
+        resizeImage(image, gridSizeX * pieceSize, gridSizeY * pieceSize, () => {
+            preparePuzzle(image);
+        });
+    };
     pieces = [];
+});
+
+resizeBtn.addEventListener("click", () => {
+    const newSizeX = parseInt(document.querySelector(".gridSizeXInput").value);
+    const newSizeY = parseInt(document.querySelector(".gridSizeYInput").value);
+
+    if (newSizeX >= 2 && newSizeX <= 9 && newSizeY >= 2 && newSizeY <= 9) {
+        gridSizeX = newSizeX;
+        gridSizeY = newSizeY;
+    } else {
+        alert("Размер поля должен быть от 2x2 до 9x9.");
+    }
 });

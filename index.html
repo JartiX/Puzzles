@@ -10,11 +10,21 @@
 
 <body>
     <h1>Собери пазл</h1>
-    <input type="file" id="imageInput" accept="image/*">
-    <button id="shuffleBtn">Начать игру</button>
+    <input type="file" class="imageInput" accept="image/*">
+    <button class="resetBtn">Сбросить изображение</button>
+    <div>
+        <label for="gridSizeXInput">Ширина поля (от 2 до 9): </label>
+        <input type="number" class="gridSizeXInput" min="2" max="9" value="9">
+    </div>
+    <div>
+        <label for="gridSizeYInput">Высота поля (от 2 до 9): </label>
+        <input type="number" class="gridSizeYInput" min="2" max="9" value="6">
+    </div>
+    <button class="resizeBtn">Изменить размер поля</button>
+    <button class="shuffleBtn">Начать игру</button>
     <div class="game">
-        <div id="piecesContainer"></div>
-        <div id="puzzleContainer"></div>
+        <div class="piecesContainer"></div>
+        <div class="puzzleContainer"></div>
     </div>
     <script src="script.js"></script>
 </body>
