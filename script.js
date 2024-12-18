@@ -107,7 +107,6 @@ function dragEnd(e) {
     const rect = puzzleContainer.getBoundingClientRect();
     const x = e.clientX - rect.left; // Координаты мыши относительно поля
     const y = e.clientY - rect.top;
-    console.log(rect);
 
     // Расчёт ближайшей клетки
     const col = Math.floor(x / pieceSize);
@@ -117,7 +116,6 @@ function dragEnd(e) {
     cellRect = cell.getBoundingClientRect();
     cell_border_Y = cellRect.width-pieceSize;
     cell_border_X = cellRect.height-pieceSize;
-    console.log(cell.getBoundingClientRect())
 
     // Проверка попадания внутрь сетки
     if (row >= 0 && row < gridSizeY && col >= 0 && col < gridSizeX) {
@@ -141,30 +139,41 @@ function dragEnd(e) {
             draggedPiece.style.top = targetPiecePos.top;
 
             // Меняем данные о правильных позициях
-            const tempCorrectRow = draggedPiece.dataset.correctRow;
-            const tempCorrectCol = draggedPiece.dataset.correctCol;
+            const tempRow = draggedPiece.dataset.row;
+            const tempCol = draggedPiece.dataset.col;
 
-            draggedPiece.dataset.correctRow = targetPiece.dataset.correctRow;
-            draggedPiece.dataset.correctCol = targetPiece.dataset.correctCol;
+            draggedPiece.dataset.row = targetPiece.dataset.row;
+            draggedPiece.dataset.col = targetPiece.dataset.col;
 
-            targetPiece.dataset.correctRow = tempCorrectRow;
-            targetPiece.dataset.correctCol = tempCorrectCol;
+            targetPiece.dataset.row = tempRow;
+            targetPiece.dataset.col = tempCol;
+
+            if (
+                targetPiece.dataset.correctRow === tempRow &&
+                targetPiece.dataset.correctCol === tempCol
+            ) {
+                targetPiece.draggable = false;
+                targetPiece.style.cursor = 'not-allowed';
+            }
         }
         else {
             draggedPiece.style.left = `${col * pieceSize + rect.left + cell_border_Y*(col+1)}px`;
-            draggedPiece.style.top = `${row * pieceSize + rect.top + cell_border_X*(row+1)}px`;
+            draggedPiece.style.top = `${row * pieceSize + rect.top + cell_border_X * (row + 1)}px`;
+            
+            draggedPiece.dataset.col = col;
+            draggedPiece.dataset.row = row;
     
-            // Проверка правильности позиции
-            if (
-                parseInt(draggedPiece.dataset.correctRow) === row &&
-                parseInt(draggedPiece.dataset.correctCol) === col
-            ) {
-                console.log("Кусочек пазла поставлен верно");
-                draggedPiece.draggable = false;
-                draggedPiece.style.cursor = 'not-allowed';
-            }
         }
-
+        
+        // Проверка правильности позиции
+        if (
+            parseInt(draggedPiece.dataset.correctRow) === row &&
+            parseInt(draggedPiece.dataset.correctCol) === col
+        ) {
+            draggedPiece.draggable = false;
+            draggedPiece.style.cursor = 'not-allowed';
+        }
+        
         checkVictory();
     } else {
         // Возвращаем кусок на место, если он вне поля
@@ -175,12 +184,11 @@ function dragEnd(e) {
 
 // Проверка на победу
 function checkVictory() {
+    console.log(pieces);
     const allPiecesCorrect = pieces.every(piece => {
-        const rect = piece.getBoundingClientRect();
-        const cell = puzzleContainer.querySelector(`.cell[data-row='${piece.dataset.correctRow}'][data-col='${piece.dataset.correctCol}']`);
-        const cellRect = cell.getBoundingClientRect();
-
-        return Math.abs(rect.left - cellRect.left) < pieceSize && Math.abs(rect.top - cellRect.top) < pieceSize;
+        // Проверяем, находятся ли все кусочки в правильных позициях, используя данные о правильных строках и столбцах
+        return parseInt(piece.dataset.correctRow) === parseInt(piece.dataset.row) &&
+               parseInt(piece.dataset.correctCol) === parseInt(piece.dataset.col);
     });
 
     if (allPiecesCorrect) {
